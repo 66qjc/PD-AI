@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-load_dotenv()
+
 import time
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +20,7 @@ from app.api.v1.routes.image_detection import router as image_detection_router
 from app.core.logging import get_logger, reset_log_user, set_log_user, setup_logging
 from core.auth import get_user_identity_from_authorization
 
-
+load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理 - 启动时初始化数据库"""
