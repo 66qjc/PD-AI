@@ -103,6 +103,7 @@ TABLE_STATEMENTS = [
 		role VARCHAR(32) NOT NULL,
 		phone VARCHAR(32),
 		email VARCHAR(128),
+		status TINYINT DEFAULT 1 COMMENT '状态：1-正常，2-删除',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		CHECK (role IN (
@@ -434,6 +435,82 @@ TABLE_STATEMENTS = [
     	INDEX idx_record (record_id)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='检测日志表';
 	""",
+# ===== 微信小程序相关表 =====
+"""
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    openid VARCHAR(64) UNIQUE NOT NULL,
+    nickname VARCHAR(64),
+    avatar VARCHAR(255),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='微信小程序用户表';
+""",
+"""
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id VARCHAR(64) UNIQUE NOT NULL,
+    user_id INT NOT NULL,
+    temp_data JSON,
+    missing_fields JSON,
+    is_completed BOOLEAN DEFAULT FALSE,
+    status VARCHAR(20) DEFAULT 'collecting',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_session (session_id),
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对话会话表';
+""",
+"""
+CREATE TABLE IF NOT EXISTS reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    session_id VARCHAR(64) NOT NULL,
+    doc_type VARCHAR(50) NOT NULL,
+    content_json JSON NOT NULL,
+    status VARCHAR(20) DEFAULT 'completed',
+    matched_booking_id INT,
+    match_status VARCHAR(20) DEFAULT 'unmatched',
+    match_remark VARCHAR(255),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (matched_booking_id) REFERENCES reports(id),
+    INDEX idx_user (user_id),
+    INDEX idx_session (session_id),
+    INDEX idx_type (doc_type),
+    INDEX idx_match (match_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='报表表';
+""",
+"""
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    plate_number VARCHAR(20),
+    driver_name VARCHAR(50),
+    id_card VARCHAR(18),
+    phone VARCHAR(11),
+    category VARCHAR(20),
+    has_waybill VARCHAR(10),
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_user (user_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
+""",
+"""
+CREATE TABLE IF NOT EXISTS chat_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    user_id INT NOT NULL COMMENT '用户ID',
+    session_id VARCHAR(64) NOT NULL COMMENT '会话ID',
+    user_message TEXT NOT NULL COMMENT '用户消息',
+    ai_reply TEXT NOT NULL COMMENT 'AI回复',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_user_session (user_id, session_id),
+    INDEX idx_session (session_id),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天历史表';
+"""
 ]
 
 
